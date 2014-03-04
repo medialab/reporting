@@ -56,8 +56,7 @@ cal = Calendar.from_ical(cal)
 tz= timezone(cal["X-WR-TIMEZONE"])
 date1=tz.localize(date1)
 date0=tz.localize(date0)
-print date1
-print date0
+
 for component in cal.walk():
     if component.name == "VEVENT":
         start_date = component.decoded('dtstart') if isinstance(component.decoded('dtstart'),datetime) else datetime.combine(component.decoded('dtstart'), date1.timetz())
