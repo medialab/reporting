@@ -4,9 +4,11 @@
 
 import sys, re
 from datetime import datetime
+from datetime import date
 from icalendar import Calendar
 from urllib2 import urlopen
 from dateutil import parser
+from pytz import timezone
 
 doc = """USAGE: ./get_ical_as_csv.py AGENDA_ICAL_URL [DATE0 [DATE1]]
 - downloads the calendar at url AGENDA_ICAL_URL (should use private urls from Google Agenda)
@@ -51,24 +53,31 @@ cal = cal.replace(' ', ' ')
 find_tags = re.compile(r'(^|\W)#(\w+)')
 res = []
 cal = Calendar.from_ical(cal)
+tz= timezone(cal["X-WR-TIMEZONE"])
+date1=tz.localize(date1)
+date0=tz.localize(date0)
+print date1
+print date0
 for component in cal.walk():
     if component.name == "VEVENT":
-        st = datetime.combine(component.decoded('dtstart'), datetime.min.time())
-        ed = datetime.combine(component.decoded('dtend'), datetime.min.time())
-        if st < date0 or date1 < ed:
+        start_date = component.decoded('dtstart') if isinstance(component.decoded('dtstart'),datetime) else datetime.combine(component.decoded('dtstart'), date1.timetz())
+        end_date = component.decoded('dtend') if isinstance(component.decoded('dtend'),datetime) else datetime.combine(component.decoded('dtend'), date1.timetz())
+        
+
+        if start_date < date0 or date1 < end_date:
             continue
-        diff = ed - st
-        dur = diff.seconds/3600. + diff.days*24
+        diff = end_date - start_date
+        dur = diff.seconds/3600. + diff.days*7.8
         exp = '"%s"' % component['summary'].replace('"', '""').strip().encode('utf-8')
         tags = []
         for _, tag in find_tags.findall(exp):
             if tag not in tags:
                 tags.append(tag)
         tags = "|".join(tags).encode('utf-8')
-        res.append([st.isoformat(), ed.isoformat(), str(dur), exp])
+        res.append([start_date.isoformat(), end_date.isoformat(), str(dur), exp, tags])
 
 res.sort()
-print "beginning,end,summary,duration(h)"
+print "beginning,end,summary,duration(h),tags"
 for l in res:
     print ",".join(l)
 
