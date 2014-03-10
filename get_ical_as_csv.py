@@ -9,6 +9,7 @@ from icalendar import Calendar
 from urllib2 import urlopen
 from dateutil import parser
 from pytz import timezone
+import codecs
 
 doc = """USAGE: ./get_ical_as_csv.py AGENDA_ICAL_URL [DATE0 [DATE1]]
 - downloads the calendar at url AGENDA_ICAL_URL (should use private urls from Google Agenda)
@@ -50,12 +51,19 @@ except:
 # replace non-breakable spaces which break icalendar lib...
 cal = cal.replace(' ', ' ')
 
-find_tags = re.compile(r'(^|\W)#(\w+)')
-res = []
+#parse the ical
 cal = Calendar.from_ical(cal)
+
+# TIMEZONE management
 tz= timezone(cal["X-WR-TIMEZONE"])
 date1=tz.localize(date1)
 date0=tz.localize(date0)
+
+# processing variables
+events = []
+tags_hours_events={}
+find_tags = re.compile(ur'(^|\W)#(\w+)',re.U)
+
 
 for component in cal.walk():
     if component.name == "VEVENT":
@@ -66,17 +74,39 @@ for component in cal.walk():
         if start_date < date0 or date1 < end_date:
             continue
         diff = end_date - start_date
-        dur = diff.seconds/3600. + diff.days*7.8
-        exp = '"%s"' % component['summary'].replace('"', '""').strip().encode('utf-8')
+        dur = diff.seconds/3600. + diff.days*7.3 #36.5h/week
+     
+        exp = component['summary'].replace('"', '""').strip()
         tags = []
         for _, tag in find_tags.findall(exp):
+            #clean tag
+            tag = tag.lower()
             if tag not in tags:
                 tags.append(tag)
-        tags = "|".join(tags).encode('utf-8')
-        res.append([start_date.isoformat(), end_date.isoformat(), str(dur), exp, tags])
+            if tag in tags_hours_events.keys():
+                tags_hours_events[tag]=(tags_hours_events[tag][0]+dur,tags_hours_events[tag][1]+1)
+            else:
+                tags_hours_events[tag]=(dur,1)
 
-res.sort()
-print "beginning,end,summary,duration(h),tags"
-for l in res:
-    print ",".join(l)
+        tags = u"|".join(tags)
+        events.append([start_date.isoformat(), end_date.isoformat(), str(dur), exp, tags])
+
+events.sort()
+with codecs.open("events_duration_tag.csv","w",encoding="utf-8") as event_file :
+    event_file.write("beginning,end,duration(h),summary,tags\n")
+    for l in events:
+        event_file.write(u",".join(l)+"\n")
+
+#sort tags by hours duration
+tags_hours_events_tuples=sorted(tags_hours_events.iteritems(), key=lambda i: i[1][0])
+tags_hours_events_tuples.reverse()
+total_duration = sum(_[1][0] for _ in tags_hours_events_tuples)
+total_working_time = (date1 - date0).days/7.*36.5
+
+print "tagged events represent %.2f"%(100*total_duration/total_working_time)
+
+with codecs.open("tags_duration.csv","w",encoding="utf-8") as tag_file :
+    tag_file.write("tag,duration(h),nb events\n")
+    for (tag,(duration,nb_event)) in tags_hours_events_tuples:
+        tag_file.write("%s,%s,%s\n"%(tag,duration,nb_event))
 
