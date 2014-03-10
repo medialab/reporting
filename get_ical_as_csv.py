@@ -11,11 +11,14 @@ from dateutil import parser
 from pytz import timezone
 import codecs
 
-doc = """USAGE: ./get_ical_as_csv.py AGENDA_ICAL_URL [DATE0 [DATE1]]
-- downloads the calendar at url AGENDA_ICAL_URL (should use private urls from Google Agenda)
-- returns as CSV for all events if no date included
-- returns as CSV events from DATE0 to today if only DATE0 given
-- returns as CSV events from DATE0 to DATE1
+doc = """USAGE: ./get_ical_as_csv.py [DATE0 [DATE1]]
+- read icals.json as configuration file with ical urls (should use private urls from Google Agenda)
+- downloads the calendar specified
+- writes to events_duration_tag.csv for all events if no date included
+- writes to events_duration_tag.csv from DATE0 to today if only DATE0 given
+- writes to events_duration_tag.csv from DATE0 to DATE1
+- extracts keyword formated as hashtags #keyword
+- writes duration agregated by keywords to tags_duration.csv
 (DATE0 & DATE1 should be ISO e.g. 2014-01-25 but other formats might work as well)
 """
 
