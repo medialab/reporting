@@ -175,9 +175,9 @@ for people in conf:
     all_tags[people["name"]]={u"tagged_coverage":tag_coverage}
     for _cat,_tags,_total_dur in ((u"projects",projects_tags_hours_events_tuples,total_duration_taged_projects),(u"activities",activities_tags_hours_events_tuples,total_duration_taged_activities),(u"unknown",unknown_tags_hours_events_tuples,total_duration_taged_unknown)):
         if len(_tags)>0:
-            all_tags[people["name"]][_cat]={}
+            all_tags[people["name"]][_cat]=[]
         for (tag,(duration,nb_event)) in _tags:
-            all_tags[people["name"]][_cat][tag]={u"duration":duration,u"duration_rate":100*duration/_total_dur,u"nb_event":nb_event}
+            all_tags[people["name"]][_cat].append({u"tag":tag,u"duration":duration,u"duration_rate":100*duration/_total_dur,u"nb_event":nb_event})
 
 
 json.dump(all_tags,codecs.open("tags_by_people.json","w",encoding="UTF8"),indent=4)
