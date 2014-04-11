@@ -1,0 +1,9 @@
+[
+	{
+		"name":"Firstname LastName",
+		"ical_url":"private_ical_url",
+		"activities":"keywords,separeted,by,a,comma",
+		"projects":"keywords,separeted,by,a,comma",
+		"ignore":"keywords,separeted,by,a,comma"
+	}
+]
