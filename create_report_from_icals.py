@@ -89,7 +89,11 @@ for people in conf:
     # processing variables
     events = []
     tags_hours_events={}
-    find_tags = re.compile(ur'(^|\W)#(\w+)',re.U)
+    regexp=people.get("regexp")
+    if regexp:
+        find_tags = re.compile(regexp,re.U)
+    else:
+        find_tags = re.compile(ur'(^|\W)#(\w+)',re.U)
 
     projects_tags=dict((t,(0,0)) for t in people.get("projects").split(",")) if "projects" in people.keys() else {}
     activities_tags=dict((t,(0,0)) for t in people["activities"].split(",")) if "activities" in people.keys() else {}
